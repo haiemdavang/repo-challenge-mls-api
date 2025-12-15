@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('username')->unique()->after('id');
+            $table->unsignedBigInteger('role_id')->default(3)->after('username'); // Default Student
             $table->string('firstname')->after('password');
             $table->string('lastname')->after('firstname');
             $table->string('phone')->nullable()->after('email');
@@ -24,6 +25,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true)->after('department');
 
             $table->dropColumn('name');
+
+            $table->foreign('role_id')->references('id')->on('roles');
         });
     }
 
@@ -33,9 +36,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['role_id']);
             $table->string('name')->after('id');
             $table->dropColumn([
                 'username',
+                'role_id',
                 'firstname',
                 'lastname',
                 'phone',

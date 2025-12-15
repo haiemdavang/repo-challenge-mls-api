@@ -16,4 +16,9 @@ class Role extends Model
     const STUDENT = 3;
 
     protected $fillable = ['name', 'shortname', 'description'];
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

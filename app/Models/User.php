@@ -15,6 +15,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'username',
+        'role_id',
         'password',
         'firstname',
         'lastname',
@@ -41,6 +42,28 @@ class User extends Authenticatable
         return "{$this->lastname} {$this->firstname}";
     }
 
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    // --- HELPER METHODS (Check Quyền Nhanh) ---
+
+    public function isManager()
+    {
+        return $this->role_id === Role::MANAGER;
+    }
+
+    public function isTeacher()
+    {
+        return $this->role_id === Role::TEACHER;
+    }
+
+    public function isStudent()
+    {
+        return $this->role_id === Role::STUDENT;
+    }
+
     // Relationship: Lấy tất cả khóa học mà user tham gia (bất kể vai trò)
     public function courses()
     {
@@ -49,13 +72,11 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    // Helper: Lấy khóa học mà user là Giáo viên
     public function teachingCourses()
     {
         return $this->courses()->wherePivot('role_id', Role::TEACHER);
     }
 
-    // Helper: Lấy khóa học mà user là Học sinh
     public function studyingCourses()
     {
         return $this->courses()->wherePivot('role_id', Role::STUDENT);
