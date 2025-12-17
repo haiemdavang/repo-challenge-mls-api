@@ -23,7 +23,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }} # Dùng token mặc định để push là đủ
+          password: ${{ secrets.GH_PAT }} # Dùng token mặc định để push là đủ
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
@@ -32,7 +32,7 @@ jobs:
           file: ./Dockerfile
           push: true
           # Tự động đặt tên image theo format: ghcr.io/username/repo:latest
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: ghcr.io/haiemdavang/rebo-challenge-lms-api:latest
 
   # =========================================================
   # JOB 2: DEPLOY TO SERVER (SSH)
@@ -46,16 +46,16 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST_IP }}
-          username: ${{ secrets.SERVER_USER }}
+          username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
             # 1. Đi tới thư mục dự án (như chúng ta đã tạo lúc nãy)
-            cd php
+            cd /root/php
 
             # 2. Đăng nhập GHCR trên Server (Cần dùng GH_PAT để server có quyền pull image private)
             # Nếu repo public thì bước này không bắt buộc, nhưng nên có cho chắc
-            echo "${{ secrets.GH_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.GH_PAT }}" | docker login ghcr.io -u haiemdavang --password-stdin
 
             # 3. Kéo image mới nhất về
             # (Lưu ý: Dùng đúng tên file docker-compose-php.yml)
