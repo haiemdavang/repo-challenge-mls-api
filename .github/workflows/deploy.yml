@@ -1,0 +1,72 @@
+name: Build & Deploy Production
+
+on:
+  push:
+    branches: ["main"] # Chỉ chạy khi push vào nhánh main
+
+jobs:
+  # =========================================================
+  # JOB 1: BUILD & PUSH IMAGE
+  # =========================================================
+  build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # Dùng token mặc định để push là đủ
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          # Tự động đặt tên image theo format: ghcr.io/username/repo:latest
+          tags: ghcr.io/${{ github.repository }}:latest
+
+  # =========================================================
+  # JOB 2: DEPLOY TO SERVER (SSH)
+  # =========================================================
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-push # Chờ Job build xong mới chạy
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # 1. Đi tới thư mục dự án (như chúng ta đã tạo lúc nãy)
+            cd php
+
+            # 2. Đăng nhập GHCR trên Server (Cần dùng GH_PAT để server có quyền pull image private)
+            # Nếu repo public thì bước này không bắt buộc, nhưng nên có cho chắc
+            echo "${{ secrets.GH_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 3. Kéo image mới nhất về
+            # (Lưu ý: Dùng đúng tên file docker-compose-php.yml)
+            docker compose -f docker-compose-php.yml pull lms-app
+
+            # 4. Tái khởi động container
+            docker compose -f docker-compose-php.yml up -d --no-deps lms-app
+
+            # 5. [QUAN TRỌNG VỚI LARAVEL] Chạy Migration database
+            # Lệnh này đảm bảo cấu trúc DB được cập nhật tự động sau khi code mới lên
+            docker exec lms-backend php artisan migrate --force
+
+            # 6. Xóa image cũ cho sạch server
+            docker image prune -f
