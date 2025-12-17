@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BadRequestException;
 use App\Exceptions\ForbiddenException;
 use App\Exceptions\UnauthorizedException;
 use App\Http\Requests\LoginRequest;
@@ -20,7 +21,7 @@ class AuthController extends Controller
         $user = User::with('role')->where('username', $credentials['username'])->first();
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
-            throw new UnauthorizedException();
+            throw new BadRequestException("INVALID_CREDENTIALS");
         }
 
         if (!$user->is_active) {

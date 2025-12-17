@@ -36,16 +36,21 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password'), // Pass mặc định
             'firstname' => 'Admin',
             'lastname' => 'System',
+            'role_id' => $roleManager->id, // Gán role Manager
         ]); // Admin thì không cần gán vào course_user, hoặc tùy logic của bạn
 
         // 3. Tạo Danh mục (Categories)
         $categories = Category::factory()->count(5)->create();
 
         // 4. Tạo Giáo viên (10 người)
-        $teachers = User::factory()->count(10)->teacher()->create();
+        $teachers = User::factory()->count(10)->teacher()->create([
+            'role_id' => $roleTeacher->id, // Gán role Teacher
+        ]);
 
         // 5. Tạo Học sinh (50 người)
-        $students = User::factory()->count(50)->student()->create();
+        $students = User::factory()->count(50)->student()->create([
+            'role_id' => $roleStudent->id, // Gán role Student
+        ]);
 
         // 6. Tạo Khóa học & Gán người dùng
         foreach ($categories as $category) {
