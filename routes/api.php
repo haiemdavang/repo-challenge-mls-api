@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckTeacherRole;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,10 @@ Route::get('/modules/{id}', [ModuleController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+    // User Profile
+    Route::get('/profile', [UserController::class, 'profile']);
+    Route::put('/profile', [UserController::class, 'updateProfile']);
 
     // Dashboard APIs
     Route::get('/my-courses', [DashboardController::class, 'myCourses']);
